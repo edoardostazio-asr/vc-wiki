@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+"""Self-test for the tools on a throwaway sample vault. Run: python3 tools/test_tools.py"""
+import json, os, shutil, sqlite3, subprocess, sys, tempfile
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def run(vault, *args):
+    return subprocess.run([sys.executable, os.path.join(vault, "tools", args[0]), *args[1:]], cwd=vault,
+                          capture_output=True, text=True)
+
+
+def write(vault, rel, text):
+    p = os.path.join(vault, rel)
+    os.makedirs(os.path.dirname(p), exist_ok=True)
+    open(p, "w", encoding="utf-8").write(text)
+
+
+def main():
+    v = tempfile.mkdtemp()
+    shutil.copytree(HERE, os.path.join(v, "tools"))
+    write(v, ".wiki/state.json", json.dumps({"owner": "Ada Investor"}))
+    write(v, "wiki/companies/Acme Robotics.md", "---\ntype: company\nstatus: prospect\nsector: \"[[Robotics]]\"\n---\n\n"
+          "# Acme Robotics\n\nFounded by [[Jane Doe]]. Seed led by [[Blue Fund]].\n")
+    write(v, "wiki/investors/Blue Fund.md", "---\ntype: investor\nkind: vc\n---\n\n# Blue Fund\n")
+    write(v, "wiki/sectors/Robotics.md", "---\ntype: sector\n---\n\n# Robotics\n")
+    write(v, "wiki/people/Jane Doe.md", "---\ntype: person\nrole: founder\ncompany: \"[[Acme Robotics]]\"\n"
+          "relationship: warm\nlast_contact: 2026-10-01\n---\n\n# Jane Doe\n")
+    write(v, "wiki/_graph/relations.jsonl", "\n".join(json.dumps(e) for e in [
+        {"source": "Acme Robotics", "rel": "founded_by", "target": "Jane Doe", "target_page": True, "status": "confirmed",
+         "confidence": "high", "evidence": "Founded by [[Jane Doe]].", "page": "Acme Robotics"},
+        {"source": "Acme Robotics", "rel": "invested_in_by", "target": "Blue Fund", "target_page": True, "status": "confirmed",
+         "confidence": "high", "round": "seed", "evidence": "Seed led by [[Blue Fund]].", "page": "Acme Robotics"},
+        {"source": "Acme Robotics", "rel": "customer", "target": "Big Corp", "target_page": False, "status": "potential",
+         "confidence": "low", "evidence": "Seed led by [[Blue Fund]].", "page": "Acme Robotics"}]) + "\n")
+    write(v, "raw/linkedin/Connections.csv", "Notes:\n\"LinkedIn note line\"\n\nFirst Name,Last Name,URL,Email Address,Company,Position,Connected On\n"
+          "Jane,Doe,https://www.linkedin.com/in/jane,,Acme Robotics,CEO & Co-founder,01 Mar 2025\n"
+          "Max,Partner,https://www.linkedin.com/in/max,,Blue Fund,General Partner,05 Jan 2026\n"
+          "Sam,Engineer,https://www.linkedin.com/in/sam,,Acme Robotics,Engineer,07 Feb 2026\n")
+
+    r = run(v, "import_linkedin.py")
+    assert r.returncode == 0, r.stderr
+    assert os.path.exists(f"{v}/wiki/people/network/Max Partner.md"), "investor connection should get a network page"
+    assert not os.path.exists(f"{v}/wiki/people/network/Sam Engineer.md"), "non-founder/investor skipped without --all"
+    assert "linkedin_connection: true" in open(f"{v}/wiki/people/Jane Doe.md").read()
+    acme = open(f"{v}/wiki/companies/Acme Robotics.md").read()
+    assert "People you know (LinkedIn)" in acme and "Sam Engineer" in acme
+    assert run(v, "import_linkedin.py").returncode == 0 and acme == open(f"{v}/wiki/companies/Acme Robotics.md").read(), \
+        "re-import must be idempotent"
+
+    r = run(v, "build_graph.py", "--check")
+    assert r.returncode == 0, r.stdout + r.stderr
+    acme = open(f"{v}/wiki/companies/Acme Robotics.md").read()
+    assert 'founded_by: ["[[Jane Doe]]"]' in acme and 'invested_in_by: ["[[Blue Fund]]"]' in acme
+    assert "customer:" not in acme, "low-confidence edges must not reach page properties"
+    db = sqlite3.connect(f"{v}/wiki/_graph/graph.db")
+    path = db.execute("""SELECT k.dst FROM edges k JOIN edges w ON w.src=k.dst AND w.rel='works_at'
+                         WHERE k.src='Ada Investor' AND k.rel='knows' AND w.dst='Acme Robotics'""").fetchall()
+    assert ("Jane Doe",) in path, "owner -> knows -> works_at path should resolve"
+
+    r = run(v, "validate.py")
+    assert r.returncode == 0, r.stdout
+    write(v, "wiki/companies/Bad.md", "---\ntype: company\nrelated: [[[Acme Robotics]], [[Robotics]]]\n---\n</content>\n")
+    r = run(v, "validate.py")
+    assert r.returncode == 1 and "[[[link]]" in r.stdout and "stray tool markup" in r.stdout, r.stdout
+    shutil.rmtree(v)
+    print("all tool tests passed")
+
+
+if __name__ == "__main__":
+    main()

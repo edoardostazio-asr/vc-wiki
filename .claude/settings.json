@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 tools/build_graph.py:*)",
+      "Bash(python3 tools/validate.py:*)",
+      "Bash(python3 tools/import_linkedin.py:*)",
+      "Bash(python3 tools/test_tools.py)",
+      "Bash(sqlite3 wiki/_graph/graph.db:*)",
+      "Bash(git status:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)"
+    ]
+  }
+}

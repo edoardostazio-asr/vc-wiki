@@ -1,0 +1,14 @@
+filters:
+  and:
+    - type == "company"
+views:
+  - type: table
+    name: Active
+    filters:
+      or:
+        - status == "portfolio"
+        - status == "prospect"
+    order: [file.name, status, sector, stage, hq, last_updated]
+    sort:
+      - property: last_updated
+        direction: DESC

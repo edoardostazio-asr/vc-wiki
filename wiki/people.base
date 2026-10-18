@@ -1,0 +1,24 @@
+filters:
+  and:
+    - type == "person"
+views:
+  - type: table
+    name: Recently in touch
+    filters:
+      and:
+        - 'file.folder != "wiki/people/network"'
+    order: [file.name, role, company, relationship, last_contact, contact_count]
+    sort:
+      - property: last_contact
+        direction: DESC
+    limit: 25
+  - type: table
+    name: Strong and warm
+    filters:
+      or:
+        - relationship == "strong"
+        - relationship == "warm"
+    order: [file.name, role, company, last_contact]
+    sort:
+      - property: last_contact
+        direction: DESC

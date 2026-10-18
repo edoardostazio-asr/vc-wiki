@@ -1,0 +1,6 @@
+wiki/_graph/graph.db
+.obsidian/workspace*.json
+.obsidian/cache
+.DS_Store
+__pycache__/
+*.pyc
