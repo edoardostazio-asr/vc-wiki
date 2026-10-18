@@ -1,6 +1,6 @@
 # VC Wiki
 
-A self-updating knowledge base for venture investors, built on Andrej Karpathy's [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) pattern. Claude reads your **Granola meetings**, **Outlook emails** and **LinkedIn network**, and keeps an Obsidian vault of interlinked pages about the people, companies, investors and sectors you work with. It also keeps a **relationship graph**, so you can ask multi-hop questions like "what's my warmest path into Acme's customers?".
+A self-updating knowledge base for venture investors, built on Andrej Karpathy's [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) pattern. Claude reads your **Granola meetings**, **Outlook emails**, one **Apple Notes** folder and your **LinkedIn network**, and keeps an Obsidian vault of interlinked pages about the people, companies, investors and sectors you work with. It also keeps a **relationship graph**, so you can ask multi-hop questions like "what's my warmest path into Acme's customers?".
 
 You read it in Obsidian and talk to it in Claude. Claude writes and maintains every page.
 
@@ -21,6 +21,7 @@ You read it in Obsidian and talk to it in Claude. Claude writes and maintains ev
    > Clone https://github.com/edoardostazio-asr/vc-wiki into ~/Documents/vc-wiki (use `gh repo clone` if `git clone` asks for a login). Don't run anything else. Then tell me to open a new Code session in that folder.
 
 3. Open a new Code session in `~/Documents/vc-wiki` and type **set up**. Claude asks four questions (you, your firm, your sectors, your stages and geographies), checks your connectors, schedules the automatic runs, and ingests your most recent week.
+   Setup also offers Apple Notes: put work notes in one folder (e.g. *VC Wiki*) and click **Allow** when macOS asks. Only that folder is read; notes containing keys or passwords are skipped.
 4. In Obsidian: **Open folder as vault** → `~/Documents/vc-wiki`. Start at **Home**.
 5. Optional: export your LinkedIn connections (Claude gives you the click path) and drop `Connections.csv` into `raw/linkedin/`, then say **import LinkedIn**.
 
@@ -62,7 +63,7 @@ Tips:
 raw/          what each source said: one file per meeting / email batch / export (never edited after writing)
 wiki/         what we know: people/, companies/, investors/, sectors/, concepts/, analyses/
 wiki/_graph/  relations.jsonl (typed relationships with evidence) + graph.db (rebuilt automatically)
-tools/        build_graph.py, validate.py, import_linkedin.py (+ tests)
+tools/        build_graph.py, validate.py, import_linkedin.py, import_notes.py (+ tests)
 .claude/      the skills Claude uses: setup, ingest, linkedin, lint, ask
 CLAUDE.md     the operating manual Claude follows (your firm profile is filled in at setup)
 ```

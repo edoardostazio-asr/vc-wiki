@@ -121,10 +121,10 @@ Rules: only relationships stated in the page text, never from general knowledge.
 ## Operations
 
 ### Ingest (skill: `ingest`)
-Sources: Granola meetings, Outlook emails (Microsoft 365 connector), LinkedIn exports (skill: `linkedin`), and anything you drop in `raw/` and say "process".
+Sources: Granola meetings, Outlook emails (Microsoft 365 connector), one Apple Notes folder (`tools/import_notes.py`), LinkedIn exports (skill: `linkedin`), and anything you drop in `raw/` and say "process".
 
 1. Read `.wiki/state.json` for the cursor; fetch only what is new since it. Process in batches (see "Budget" below) and advance the cursor after each batch, so an interrupted run resumes cleanly.
-2. Write each capture to `raw/` (one file per meeting or per email batch). These files are never edited afterwards.
+2. Write each capture to `raw/` (one file per meeting or per email batch). These files are never edited afterwards, except `raw/notes/`, which mirrors live notes and is refreshed when a note changes.
 3. Update **people first**: create or update person pages for every substantive participant (relationship section, `last_contact`, `contact_count`), then companies, investors and sectors.
 4. Extract typed relationships for every page you touched, replace that page's lines in `relations.jsonl`, and run `python3 tools/build_graph.py --check`.
 5. Run `python3 tools/validate.py` and fix anything it flags in the pages you touched.

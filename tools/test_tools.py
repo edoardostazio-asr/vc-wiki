@@ -63,6 +63,17 @@ def main():
     write(v, "wiki/companies/Bad.md", "---\ntype: company\nrelated: [[[Acme Robotics]], [[Robotics]]]\n---\n</content>\n")
     r = run(v, "validate.py")
     assert r.returncode == 1 and "[[[link]]" in r.stdout and "stray tool markup" in r.stdout, r.stdout
+
+    sys.path.insert(0, f"{v}/tools")
+    import import_notes
+    note = {"id": "x-coredata://n1", "title": "Robotics thesis", "created": "2026-10-01T09:00:00Z",
+            "modified": "2026-10-02T09:00:00Z", "body": "Humanoids need cheap actuators."}
+    secret = dict(note, id="x-coredata://n2", title="keys", body="openai sk-abcdefghijklmnopqrstu")
+    out = f"{v}/raw/notes"
+    written, skipped = import_notes.write([note, secret], out)
+    assert len(written) == 1 and skipped == ["keys"], "notes holding keys must never be copied"
+    written2, _ = import_notes.write([dict(note, title="Renamed", body="v2")], out)
+    assert written2 == written and "v2" in open(written[0]).read(), "an edited note updates its existing file"
     shutil.rmtree(v)
     print("all tool tests passed")
 

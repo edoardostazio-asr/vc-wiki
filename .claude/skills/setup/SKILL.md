@@ -26,7 +26,7 @@ Write `.wiki/state.json`:
 {"owner": "<Name>", "setup_date": "<YYYY-MM-DD>",
  "granola_cursor": "<today minus 7 weeks, ISO date>", "email_cursor": "<same>",
  "backfill": {"start": "<today minus 7 weeks>", "end": "<today>", "weeks_done": []},
- "linkedin_imported": null}
+ "linkedin_imported": null, "notes": {"folder": null, "cursor": "<today minus 7 weeks>"}}
 ```
 The owner's name is the "me" node in the relationship graph. Also create `wiki/people/<Name>.md` from `templates/person.md` with `role: colleague`.
 
@@ -35,6 +35,7 @@ Check which tools are available in this session:
 - **Granola** (a tool that lists meetings, such as `list_meetings`). If missing: "Open claude.ai → Settings → Connectors → Granola → Connect, sign in, then start a new Claude session in this folder."
 - **Microsoft 365 / Outlook** (an email search tool, such as `outlook_email_search`). If missing: same path, "Microsoft 365".
 - Optional: **Harmonic** (enriches LinkedIn connections with location and background), **Affinity** (CRM).
+- Optional: **Apple Notes** (no connector; read locally). Ask: "Do you keep work notes in Apple Notes? If so, make one folder for them (e.g. **VC Wiki**) and tell me its name. I only ever read that folder." Save the name in `notes.folder`, then run `python3 tools/import_notes.py --folder "<name>" --since <notes.cursor>` once: macOS will ask to let Claude control Notes; tell the user to click **Allow**.
 Make one tiny read call to each available connector (e.g. list one meeting) to confirm it really works. Never send or modify anything through a connector during setup.
 
 ## 5. Obsidian
