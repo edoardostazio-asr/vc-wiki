@@ -54,7 +54,14 @@ def write(notes, out=OUT):
         if SECRET.search(n["title"] + "\n" + n["body"]):
             skipped.append(n["title"][:40])
             continue
-        path = existing.get(n["id"]) or os.path.join(out, f"{n['created'][:10]}-{slug(n['title'])}.md")
+        path = existing.get(n["id"])
+        if not path:
+            base, k = os.path.join(out, f"{n['created'][:10]}-{slug(n['title'])}"), 1
+            path = base + ".md"
+            while os.path.exists(path):  # same day and title as another note
+                k += 1
+                path = f"{base}-{k}.md"
+            existing[n["id"]] = path
         title = n["title"].replace('"', "'")
         with open(path, "w", encoding="utf-8") as f:
             f.write(f'---\nnotes_id: {n["id"]}\ntitle: "{title}"\ncreated: {n["created"]}\n'

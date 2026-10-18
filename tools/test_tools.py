@@ -72,6 +72,8 @@ def main():
     out = f"{v}/raw/notes"
     written, skipped = import_notes.write([note, secret], out)
     assert len(written) == 1 and skipped == ["keys"], "notes holding keys must never be copied"
+    twin, _ = import_notes.write([dict(note, id="x-coredata://n3")], out)
+    assert twin[0] != written[0], "two notes with the same day and title must not overwrite each other"
     written2, _ = import_notes.write([dict(note, title="Renamed", body="v2")], out)
     assert written2 == written and "v2" in open(written[0]).read(), "an edited note updates its existing file"
     shutil.rmtree(v)
