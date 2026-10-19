@@ -54,7 +54,6 @@ Then check with `python3 tools/compile.py --dry-run` (it must not say "No API ke
 Check only the sources the user chose:
 - **Granola** (a tool that lists meetings, such as `list_meetings`). If missing: "Open claude.ai → Settings → Connectors → Granola → Connect, sign in, then start a new Claude session in this folder."
 - **Microsoft 365 / Outlook** (an email search tool, such as `outlook_email_search`). If missing: same path, "Microsoft 365".
-- Optional: **Harmonic** (enriches LinkedIn connections with location and background), **Affinity** (CRM).
 - **Apple Notes** (no connector; read locally). Ask which folder holds their work notes (suggest making one called **VC Wiki**); "I only ever read that folder." Save the name in `notes.folder`, then run `python3 tools/import_notes.py --folder "<name>" --since <today>` once as an access check (nothing old is imported; the backfill picks those up): macOS will ask to let Claude control Notes; tell the user to click **Allow**.
 Make one tiny read call to each available connector (e.g. list one meeting) to confirm it really works. Never send or modify anything through a connector during setup.
 
@@ -74,6 +73,7 @@ The scheduler may shift the time by a few minutes; that's expected. Tell the use
 If no scheduled-tasks tool is available, explain: "In the Claude desktop app, open the Code tab → Scheduled → New task", and give both prompts and times. Note that scheduled runs only fire while the computer is awake and the Claude app is running.
 
 ## 10. LinkedIn (only if chosen)
+Follow Step 1 of the `linkedin` skill (the download guide). Mention that afterwards they can enrich the list in the Harmonic app (location, roles, prior founders) with a ready-made prompt; the `linkedin` skill walks them through it.
 Explain: "LinkedIn → Me → Settings & Privacy → Data privacy → Get a copy of your data → tick only Connections → Request. The email arrives in about 10 minutes. Drop `Connections.csv` into `raw/linkedin/` and say 'import LinkedIn'." If a CSV is already there, run the `linkedin` skill now.
 
 ## 11. Start the backfill

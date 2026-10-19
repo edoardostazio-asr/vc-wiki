@@ -23,7 +23,7 @@ You read it in Obsidian and talk to it in Claude. Claude writes and maintains ev
 3. Open a new Code session in `~/Documents/vc-wiki` and type **set up**. Before fetching anything, Claude shows a card asking which sources to use (Granola, Outlook, Apple Notes, LinkedIn), how much history to load (2, 4 or 7 weeks) and whether you have an Anthropic API key. Then four profile questions (you, your firm, sectors, stages and geographies). It checks only the connectors you chose, schedules the automatic runs, and starts loading your history.
    Setup also offers Apple Notes: put work notes in one folder (e.g. *VC Wiki*) and click **Allow** when macOS asks. Only that folder is read; notes containing keys or passwords are skipped.
 4. In Obsidian: **Open folder as vault** → `~/Documents/vc-wiki`. Start at **Home**.
-5. Optional: export your LinkedIn connections (Claude gives you the click path) and drop `Connections.csv` into `raw/linkedin/`, then say **import LinkedIn**.
+5. Optional: say **import LinkedIn**. Claude walks you through downloading your connections from LinkedIn (about 10 minutes, mostly waiting for LinkedIn's email), imports them, and then, if you use Harmonic, through enriching them in the Harmonic app: it writes the upload file, gives you the exact prompt to paste into Harmonic, and merges the export back (location, current role, company stage, prior founders).
 
 That's it. From then on the wiki updates itself on weekdays at 18:30 while your computer is awake and the Claude app is running.
 
@@ -71,7 +71,7 @@ Tips:
 raw/          what each source said: one file per meeting / email batch / export (never edited after writing)
 wiki/         what we know: people/, companies/, investors/, sectors/, concepts/, analyses/
 wiki/_graph/  relations.jsonl (typed relationships with evidence) + graph.db (rebuilt automatically)
-tools/        build_graph.py, validate.py, import_linkedin.py, import_notes.py (+ tests)
+tools/        build_graph.py, validate.py, import_linkedin.py, import_notes.py, compile.py (+ tests)
 .claude/      the skills Claude uses: setup, ingest, linkedin, lint, ask
 CLAUDE.md     the operating manual Claude follows (your firm profile is filled in at setup)
 ```

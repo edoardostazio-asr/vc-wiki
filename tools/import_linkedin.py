@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """Import a LinkedIn Connections.csv export into the wiki.
 
-Usage (from the vault root):  python3 tools/import_linkedin.py [path/to/Connections.csv] [--all]
+Usage (from the vault root):
+  python3 tools/import_linkedin.py [path/to/Connections.csv] [--all]   import the LinkedIn export
+  python3 tools/import_linkedin.py --harmonic-upload [--all]            write raw/linkedin/harmonic-upload.csv
+                                                                       (founders + investors; --all = everyone)
+  python3 tools/import_linkedin.py --harmonic path/to/enriched.csv      merge a Harmonic export into person pages
 
 - Existing person pages (wiki/people/**): adds linkedin, linkedin_connection, connected_since.
 - Founders and investors without a page: creates a light profile in wiki/people/network/
@@ -15,6 +19,7 @@ import csv, datetime, glob, io, os, re, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WIKI = os.path.join(ROOT, "wiki")
 SECTION = "## People you know (LinkedIn)"
+BACKGROUND = "## Background (Harmonic)"
 FOUNDER = re.compile(r"founder|\bceo\b|co-founder|cofounder", re.I)
 INVESTOR = re.compile(r"\b(partner|principal|investor|investment|associate|analyst|venture|vc)\b", re.I)
 INVESTOR_CO = re.compile(r"capital|ventures?|partners|fund|invest", re.I)
@@ -57,12 +62,65 @@ def set_props(path, props):
     return bool(add)
 
 
+def url_key(u):
+    return re.sub(r"^(https?://)?(www\.)?", "", (u or "").strip().lower()).rstrip("/")
+
+
+def harmonic_upload(conns, out):
+    rows = [c for c in conns if "--all" in sys.argv or role(c)]
+    with open(out, "w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["linkedin_url", "full_name", "company", "position"])
+        for c in rows:
+            w.writerow([c["URL"], f"{c['First Name']} {c['Last Name']}".strip(), c["Company"], c["Position"]])
+    print(f"wrote {len(rows)} people to {os.path.relpath(out, ROOT)} (upload this file to Harmonic)")
+
+
+def harmonic_merge(path):
+    rows = list(csv.DictReader(open(path, encoding="utf-8-sig")))
+    if not rows or "linkedin_url" not in rows[0]:
+        sys.exit("This doesn't look like the Harmonic export: it needs a linkedin_url column (see the linkedin skill).")
+    pages = {}
+    for p in glob.glob(os.path.join(WIKI, "people", "**", "*.md"), recursive=True):
+        m = re.search(r"^linkedin:\s*(\S+)", open(p, encoding="utf-8").read(3000), re.M)
+        if m:
+            pages[url_key(m.group(1))] = p
+    g = lambda r, k: (r.get(k) or "").replace("\ufffd", "").strip()  # Harmonic exports can carry U+FFFD
+    done = 0
+    for r in rows:
+        p = pages.get(url_key(r["linkedin_url"]))
+        if not p:
+            continue
+        city, country = g(r, "location_city"), g(r, "location_country")
+        set_props(p, {"location": f'"{", ".join(x for x in (city, country) if x)}"' if city or country else "",
+                      "country": f'"{country}"' if country else "",
+                      "company_stage": g(r, "current_company_stage").lower(),
+                      "company_funding_usd": g(r, "current_company_funding_usd") if g(r, "current_company_funding_usd") not in ("", "0") else "",
+                      "prior_founder": "true" if g(r, "prior_founder") in ("1", "true", "True", "yes") else "",
+                      "harmonic_enriched": str(datetime.date.today())})
+        lines = [f"- {x}" for x in (g(r, "linkedin_headline"),
+                                    "Now: " + g(r, "current_roles_clean") if g(r, "current_roles_clean") else "",
+                                    "Before: " + g(r, "prior_experience_clean") if g(r, "prior_experience_clean") else "") if x]
+        s = open(p, encoding="utf-8").read()
+        s = re.sub(rf"\n{re.escape(BACKGROUND)}\n.*?(?=\n## |\Z)", "", s, flags=re.S).rstrip("\n")
+        if lines:
+            s += f"\n\n{BACKGROUND}\n\n" + "\n".join(lines) + f"\n\nSource: Harmonic export `{os.path.basename(path)}`.\n"
+        open(p, "w", encoding="utf-8").write(s)
+        done += 1
+    print(f"{len(rows)} Harmonic rows: {done} person pages enriched, {len(rows) - done} had no page with that LinkedIn URL")
+
+
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    path = args[0] if args else max(glob.glob(os.path.join(ROOT, "raw", "linkedin", "*.csv")), key=os.path.getmtime, default=None)
+    if "--harmonic" in sys.argv:
+        return harmonic_merge(args[0] if args else sys.exit("Give the Harmonic export: --harmonic path/to/file.csv"))
+    exports = glob.glob(os.path.join(ROOT, "raw", "linkedin", "Connections*.csv"))
+    path = args[0] if args else max(exports, key=os.path.getmtime, default=None)
     if not path:
         sys.exit("No CSV found: put your LinkedIn Connections.csv in raw/linkedin/")
     conns = load(path)
+    if "--harmonic-upload" in sys.argv:
+        return harmonic_upload(conns, os.path.join(ROOT, "raw", "linkedin", "harmonic-upload.csv"))
     people = {os.path.basename(p)[:-3].lower(): p for p in glob.glob(os.path.join(WIKI, "people", "**", "*.md"), recursive=True)}
     orgs = {}
     for folder in ("companies", "investors"):

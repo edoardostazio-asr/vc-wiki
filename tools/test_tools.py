@@ -50,6 +50,20 @@ def main():
     assert run(v, "import_linkedin.py").returncode == 0 and acme == open(f"{v}/wiki/companies/Acme Robotics.md").read(), \
         "re-import must be idempotent"
 
+    r = run(v, "import_linkedin.py", "--harmonic-upload")
+    up = open(f"{v}/raw/linkedin/harmonic-upload.csv").read()
+    assert r.returncode == 0 and "jane" in up and "max" in up and "sam" not in up, up
+    write(v, "raw/linkedin/harmonic-enriched.csv",
+          "linkedin_url,full_name,linkedin_headline,location_city,location_country,current_roles_clean,"
+          "current_company_stage,current_company_funding_usd,prior_experience_clean,prior_founder\n"
+          "linkedin.com/in/jane/,Jane Doe,CEO @ Acme,Munich,Germany,CEO @ Acme Robotics,SEED,4000000,Engineer @ KUKA (2018-2022),1\n")
+    for _ in range(2):  # merging twice must not duplicate the section
+        r = run(v, "import_linkedin.py", "--harmonic", f"{v}/raw/linkedin/harmonic-enriched.csv")
+        assert r.returncode == 0 and "1 person pages enriched" in r.stdout, r.stdout + r.stderr
+    jane = open(f"{v}/wiki/people/Jane Doe.md").read()
+    assert 'location: "Munich, Germany"' in jane and "prior_founder: true" in jane and jane.count("## Background (Harmonic)") == 1, jane
+    assert run(v, "import_linkedin.py").returncode == 0, "a Harmonic CSV in raw/linkedin must not be mistaken for the LinkedIn export"
+
     r = run(v, "build_graph.py", "--check")
     assert r.returncode == 0, r.stdout + r.stderr
     acme = open(f"{v}/wiki/companies/Acme Robotics.md").read()
