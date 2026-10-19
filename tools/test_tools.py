@@ -82,6 +82,26 @@ def main():
     assert twin[0] != written[0], "two notes with the same day and title must not overwrite each other"
     written2, _ = import_notes.write([dict(note, title="Renamed", body="v2")], out)
     assert written2 == written and "v2" in open(written[0]).read(), "an edited note updates its existing file"
+
+    import compile as comp
+    comp.ROOT, comp.DONE = v, f"{v}/.wiki/compiled.txt"
+    for i in range(12):
+        write(v, f"raw/granola/2026-10-{i+1:02d}-m{i}.md", f"---\ntitle: m{i}\n---\n")
+    first = comp.pending()
+    assert [len(f) for s, f in first if s == "granola"] == [10, 3], first
+    fake = f"{v}/fake-claude"
+    write(v, "fake-claude", "#!/bin/sh\necho '{\"total_cost_usd\": 0.42, \"is_error\": false, \"result\": \"ok\"}'\n")
+    os.chmod(fake, 0o755)
+    comp.CLAUDE = fake
+    ok, cost, _ = comp.run_batch(first[0][1], "sk-test", 5)
+    assert ok and cost == 0.42
+    for s, f in first:
+        comp.mark(f)
+    assert comp.pending() == [], "compiled files must not be queued again"
+    write(v, "raw/notes/2026-10-02-thesis.md", "---\ntitle: t\n---\nv1\n")
+    comp.mark([f"{v}/raw/notes/2026-10-02-thesis.md"])
+    write(v, "raw/notes/2026-10-02-thesis.md", "---\ntitle: t\n---\nv2\n")
+    assert [s for s, _ in comp.pending()] == ["notes"], "an edited note must be recompiled"
     shutil.rmtree(v)
     print("all tool tests passed")
 

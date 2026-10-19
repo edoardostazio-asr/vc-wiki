@@ -150,7 +150,9 @@ Run `tools/validate.py` (broken links, malformed YAML links, missing frontmatter
 - Full-text search over a few thousand pages takes well under a second; don't add a search index until search actually misses things.
 - `wiki/people/network/` holds auto-generated LinkedIn profiles. The Obsidian graph filter hides them; promote a person to `wiki/people/` once you've actually met them.
 
-## Budget (Claude Pro)
+## Budget (Claude Pro, or an API key)
+
+If `api_key` is true in `.wiki/state.json`, compiling runs on the user's API key via `tools/compile.py` (Sonnet, cost logged in `.wiki/costs.log`), and only fetching uses the Pro allowance. Otherwise everything runs on Pro:
 
 Claude Pro has a usage allowance that resets every few hours, plus a weekly cap. Ingesting reads and writes a lot, so:
 

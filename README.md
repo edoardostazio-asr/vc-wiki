@@ -20,7 +20,7 @@ You read it in Obsidian and talk to it in Claude. Claude writes and maintains ev
 
    > Clone https://github.com/edoardostazio-asr/vc-wiki into ~/Documents/vc-wiki (use `gh repo clone` if `git clone` asks for a login). Don't run anything else. Then tell me to open a new Code session in that folder.
 
-3. Open a new Code session in `~/Documents/vc-wiki` and type **set up**. Claude asks four questions (you, your firm, your sectors, your stages and geographies), checks your connectors, schedules the automatic runs, and ingests your most recent week.
+3. Open a new Code session in `~/Documents/vc-wiki` and type **set up**. Before fetching anything, Claude shows a card asking which sources to use (Granola, Outlook, Apple Notes, LinkedIn), how much history to load (2, 4 or 7 weeks) and whether you have an Anthropic API key. Then four profile questions (you, your firm, sectors, stages and geographies). It checks only the connectors you chose, schedules the automatic runs, and starts loading your history.
    Setup also offers Apple Notes: put work notes in one folder (e.g. *VC Wiki*) and click **Allow** when macOS asks. Only that folder is read; notes containing keys or passwords are skipped.
 4. In Obsidian: **Open folder as vault** → `~/Documents/vc-wiki`. Start at **Home**.
 5. Optional: export your LinkedIn connections (Claude gives you the click path) and drop `Connections.csv` into `raw/linkedin/`, then say **import LinkedIn**.
@@ -39,7 +39,15 @@ Ask Claude anything in a Code session opened in the vault folder:
 
 Good answers can be saved as pages in `wiki/analyses/`.
 
-## Claude Pro usage: how to pace it
+## With an Anthropic API key (recommended)
+
+Fetching your meetings and email always runs in your Claude session, because that's where the Granola and Microsoft 365 connectors live. The expensive part, turning those into wiki pages, can run on your own API key instead (`tools/compile.py`, Sonnet, one short session per batch). Your Claude Pro allowance then stays free for questions, and setup can load your whole history in one go.
+
+- The key lives in the macOS keychain, never in the vault. Setup tells you the one Terminal command to store it.
+- Rough cost on Sonnet, measured on a real investor's inbox: **about $20–60 for a month of history** (mostly email volume), then **about $1–2 per working day**. Every batch's cost is logged in `.wiki/costs.log`, and a run stops at $40 unless you raise it.
+- Set a monthly spend limit in the Anthropic Console (Settings → Limits) for peace of mind.
+
+## Claude Pro usage: how to pace it (without an API key)
 
 Claude Pro's usage allowance resets every few hours, with a weekly cap on top. Ingesting is the heavy part, because Claude reads every source and updates many pages. The wiki is built to stay inside that allowance:
 
