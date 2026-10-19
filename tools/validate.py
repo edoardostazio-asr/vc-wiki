@@ -65,7 +65,10 @@ def run():
     broken = {}
     for p, s in texts.items():
         for t in re.findall(r"(?<!!)\[\[([^\]|#]+)", s):
-            t = t.strip().split("/")[-1]
+            t = t.strip()
+            if "/" in t and os.path.exists(os.path.join(ROOT, t + ".md")):  # path link, e.g. [[raw/granola/x]]
+                continue
+            t = t.split("/")[-1]
             if t.lower() not in names and t.lower() not in aliases:
                 broken.setdefault(t, set()).add(os.path.basename(p)[:-3])
     for t, src in sorted(broken.items(), key=lambda x: -len(x[1]))[:25]:

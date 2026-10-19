@@ -51,6 +51,8 @@ def write(notes, out=OUT):
             existing[m.group(1)] = p
     written, skipped = [], []
     for n in notes:
+        if not n["body"].strip() or n["body"].strip() == n["title"].strip():  # empty, or title only
+            continue
         if SECRET.search(n["title"] + "\n" + n["body"]):
             skipped.append(n["title"][:40])
             continue

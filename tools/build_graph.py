@@ -90,7 +90,7 @@ def build():
                               confidence="high", origin="property", page=name))
         # "knows" edges: people you have met (weighted) and LinkedIn connections (weight 1)
         weight = KNOWS.get(rel_strength, 1 if prop(fm, "linkedin_connection") == "true" else 0)
-        if kind == "person" and weight:
+        if kind == "person" and weight and name != me:
             edges.append(dict(src=me, rel="knows", dst=name, status="confirmed", confidence="high",
                               weight=weight, origin="relationship", page=name,
                               date=prop(fm, "last_contact") or prop(fm, "connected_since")))

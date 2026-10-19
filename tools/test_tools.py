@@ -24,6 +24,8 @@ def main():
           "# Acme Robotics\n\nFounded by [[Jane Doe]]. Seed led by [[Blue Fund]].\n")
     write(v, "wiki/investors/Blue Fund.md", "---\ntype: investor\nkind: vc\n---\n\n# Blue Fund\n")
     write(v, "wiki/sectors/Robotics.md", "---\ntype: sector\n---\n\n# Robotics\n")
+    write(v, "wiki/people/Ada Investor.md", "---\ntype: person\nrole: self\nrelationship: strong\n---\n\n# Ada Investor\n")
+    write(v, "raw/granola/2026-10-01-acme.md", "---\ntitle: x\n---\n")
     write(v, "wiki/people/Jane Doe.md", "---\ntype: person\nrole: founder\ncompany: \"[[Acme Robotics]]\"\n"
           "relationship: warm\nlast_contact: 2026-10-01\n---\n\n# Jane Doe\n")
     write(v, "wiki/_graph/relations.jsonl", "\n".join(json.dumps(e) for e in [
@@ -56,10 +58,13 @@ def main():
     db = sqlite3.connect(f"{v}/wiki/_graph/graph.db")
     path = db.execute("""SELECT k.dst FROM edges k JOIN edges w ON w.src=k.dst AND w.rel='works_at'
                          WHERE k.src='Ada Investor' AND k.rel='knows' AND w.dst='Acme Robotics'""").fetchall()
+    assert not db.execute("SELECT 1 FROM edges WHERE src='Ada Investor' AND rel='knows' AND dst='Ada Investor'").fetchall(), \
+        "the owner must not know themselves"
     assert ("Jane Doe",) in path, "owner -> knows -> works_at path should resolve"
 
+    write(v, "wiki/people/Jane Doe.md", open(f"{v}/wiki/people/Jane Doe.md").read() + "\nSource: [[raw/granola/2026-10-01-acme]]\n")
     r = run(v, "validate.py")
-    assert r.returncode == 0, r.stdout
+    assert r.returncode == 0 and "raw/granola" not in r.stdout and "2026-10-01-acme" not in r.stdout, r.stdout
     write(v, "wiki/companies/Bad.md", "---\ntype: company\nrelated: [[[Acme Robotics]], [[Robotics]]]\n---\n</content>\n")
     r = run(v, "validate.py")
     assert r.returncode == 1 and "[[[link]]" in r.stdout and "stray tool markup" in r.stdout, r.stdout
@@ -70,7 +75,8 @@ def main():
             "modified": "2026-10-02T09:00:00Z", "body": "Humanoids need cheap actuators."}
     secret = dict(note, id="x-coredata://n2", title="keys", body="openai sk-abcdefghijklmnopqrstu")
     out = f"{v}/raw/notes"
-    written, skipped = import_notes.write([note, secret], out)
+    empty = dict(note, id="x-coredata://n4", title="New Note", body="New Note")
+    written, skipped = import_notes.write([note, secret, empty], out)
     assert len(written) == 1 and skipped == ["keys"], "notes holding keys must never be copied"
     twin, _ = import_notes.write([dict(note, id="x-coredata://n3")], out)
     assert twin[0] != written[0], "two notes with the same day and title must not overwrite each other"

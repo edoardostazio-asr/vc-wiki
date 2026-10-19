@@ -52,7 +52,7 @@ Claude Pro's usage allowance resets every few hours, with a weekly cap on top. I
 
 Tips:
 - **Run heavy work outside your working day.** The schedule already does this, so your daytime allowance stays free for questions.
-- **If you hit the limit, do nothing.** Ingest works in batches (about 15 meetings or 40 email threads) and saves progress after each one; the next run resumes where it stopped.
+- **If you hit the limit, do nothing.** Ingest works in batches (about 15 meetings or 75 emails) and saves progress after each one; the next run resumes where it stopped.
 - **After a holiday**, the daily run catches up one batch at a time. To catch up faster, say "ingest" in the evening once or twice.
 - **Heavy weeks** (20+ meetings): run "ingest" once at lunchtime so the evening run has less to do.
 - **Upgrade to Max** only if you regularly hit the weekly cap; most investors won't.

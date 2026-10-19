@@ -1,7 +1,7 @@
 ---
 type: person
 role: founder
-company: "[[]]"
+company: ""
 location: ""
 linkedin:
 relationship: met

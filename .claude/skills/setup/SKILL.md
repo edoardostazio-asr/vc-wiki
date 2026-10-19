@@ -24,18 +24,19 @@ Write the answers into the **Firm profile** section of `CLAUDE.md` (replace ever
 Write `.wiki/state.json`:
 ```json
 {"owner": "<Name>", "setup_date": "<YYYY-MM-DD>",
- "granola_cursor": "<today minus 7 weeks, ISO date>", "email_cursor": "<same>",
+ "granola_cursor": "<today, ISO datetime>", "email_cursor": "<same>",
  "backfill": {"start": "<today minus 7 weeks>", "end": "<today>", "weeks_done": []},
  "linkedin_imported": null, "notes": {"folder": null, "cursor": "<today minus 7 weeks>"}}
 ```
-The owner's name is the "me" node in the relationship graph. Also create `wiki/people/<Name>.md` from `templates/person.md` with `role: colleague`.
+Daily cursors start at setup; backfill covers the 7 weeks before, so nothing is fetched twice. The notes cursor starts 7 weeks back: notes are few, so the first daily run takes them all.
+The owner's name is the "me" node in the relationship graph. Also create the owner page `wiki/people/<Name>.md` (`type: person`, `role: self`, `company: "[[<Firm>]]"`, no `relationship` field, a one-line Summary), and the firm's own page `wiki/investors/<Firm>.md` from `templates/investor.md`.
 
 ## 4. Connectors
 Check which tools are available in this session:
 - **Granola** (a tool that lists meetings, such as `list_meetings`). If missing: "Open claude.ai → Settings → Connectors → Granola → Connect, sign in, then start a new Claude session in this folder."
 - **Microsoft 365 / Outlook** (an email search tool, such as `outlook_email_search`). If missing: same path, "Microsoft 365".
 - Optional: **Harmonic** (enriches LinkedIn connections with location and background), **Affinity** (CRM).
-- Optional: **Apple Notes** (no connector; read locally). Ask: "Do you keep work notes in Apple Notes? If so, make one folder for them (e.g. **VC Wiki**) and tell me its name. I only ever read that folder." Save the name in `notes.folder`, then run `python3 tools/import_notes.py --folder "<name>" --since <notes.cursor>` once: macOS will ask to let Claude control Notes; tell the user to click **Allow**.
+- Optional: **Apple Notes** (no connector; read locally). Ask: "Do you keep work notes in Apple Notes? If so, make one folder for them (e.g. **VC Wiki**) and tell me its name. I only ever read that folder." Save the name in `notes.folder`, then run `python3 tools/import_notes.py --folder "<name>" --since <today>` once as an access check (nothing old is imported; the backfill picks those up): macOS will ask to let Claude control Notes; tell the user to click **Allow**.
 Make one tiny read call to each available connector (e.g. list one meeting) to confirm it really works. Never send or modify anything through a connector during setup.
 
 ## 5. Obsidian
@@ -43,13 +44,14 @@ Make one tiny read call to each available connector (e.g. list one meeting) to c
 - The repo ships `.obsidian/` settings: attachments go to `raw/assets/`, templates come from `templates/`, and the graph hides `wiki/people/network/`.
 
 ## 6. Git
-- `git init` if there is no `.git`; then commit the configured template ("Setup: <Name>").
+- `git init` if there is no `.git`. If `git config user.email` is empty (normal on a fresh Mac), set a repo-local identity from the interview: `git config user.name "<Name>"` and `git config user.email "<their work email>"` (the Microsoft 365 connector's profile tool gives the address). Then commit the configured template ("Setup: <Name>").
 - If the clone still points at the template repo (`git remote -v`), remove that remote (`git remote remove origin`) so personal data can never be pushed there. Offer, without pushing anything, to create a **private** personal backup repo later.
 
 ## 7. Schedule the automatic runs
-Use the scheduled-tasks tool (create a scheduled task). Create two tasks with this folder as the working directory:
-- **"VC Wiki: daily ingest"**: weekdays at 18:30 local time, prompt: `Run the ingest skill in daily mode.`
-- **"VC Wiki: weekly lint"**: Fridays at 17:00, prompt: `Run the lint skill in scheduled mode.`
+Use the scheduled-tasks tool (create a scheduled task). Scheduled runs don't start in this folder, so each prompt must name it (use the absolute path from `pwd`):
+- **"VC Wiki: daily ingest"**: cron `30 18 * * 1-5`, prompt: `Working directory: <absolute path>. cd there first. Read .claude/skills/ingest/SKILL.md and run it in daily mode.`
+- **"VC Wiki: weekly lint"**: cron `0 17 * * 5`, prompt: `Working directory: <absolute path>. cd there first. Read .claude/skills/lint/SKILL.md and run it in scheduled mode.`
+The scheduler may shift the time by a few minutes; that's expected. Tell the user to open **Scheduled** in the sidebar and click **Run now** on the daily ingest once, after setup: it approves the connectors for future unattended runs, and it processes the next backfill week.
 If no scheduled-tasks tool is available, explain: "In the Claude desktop app, open the Code tab → Scheduled → New task", and give both prompts and times. Note that scheduled runs only fire while the computer is awake and the Claude app is running.
 
 ## 8. LinkedIn (manual, optional now)
