@@ -54,7 +54,7 @@ def run():
                 errors.append(f"{rel}: unquoted [[[link]] list in frontmatter; write [\"[[A]]\", \"[[B]]\"]")
             if "/people/" in p and "/network/" not in p:
                 people.append(name)
-                for k in ("company", "last_contact"):
+                for k in ("company",) if re.search(r"^role:\s*self\b", fm, re.M) else ("company", "last_contact"):
                     if not re.search(rf"^{k}:\s*\S", fm, re.M):
                         warnings.append(f"{rel}: person page missing `{k}`")
         elif name not in SPECIAL:
