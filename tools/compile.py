@@ -69,10 +69,10 @@ def api_key():
     if re.fullmatch(r"sk-ant-[A-Za-z0-9_-]+", k):  # a mangled paste (twice, stray chars) is ignored, not sent
         return k
     if os.path.exists(ENV_FILE):
-        for line in open(ENV_FILE):
-            k, _, v = line.strip().partition("=")
-            if k.strip() == "ANTHROPIC_API_KEY" and v.strip():
-                return v.strip().strip('"\'')
+        for line in open(ENV_FILE):  # "ANTHROPIC_API_KEY=sk-ant-..." or just the key on its own line
+            v = line.strip().split("=", 1)[-1].strip().strip('"\'')
+            if re.fullmatch(r"sk-ant-[A-Za-z0-9_-]+", v):
+                return v
     return None
 
 
