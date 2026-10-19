@@ -4,6 +4,10 @@ A self-updating knowledge base for venture investors, built on Andrej Karpathy's
 
 You read it in Obsidian and talk to it in Claude. Claude writes and maintains every page.
 
+![The graph of a real VC Wiki after a few months: about 2,300 pages of people, companies, investors and sectors](docs/graph.png)
+
+*A real VC Wiki after a few months of meetings, email and notes, seen in Obsidian's graph view.*
+
 ## What you get
 
 - **People first.** Every meeting and email updates the pages of the people involved first: how you know them, when you last spoke, what they care about, what you promised. Company, investor and sector pages lead with who you know there.
