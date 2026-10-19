@@ -9,11 +9,11 @@ Usage (from the vault root):
 
 Fetching (Granola, Outlook) happens in a normal Claude session, which writes raw/ files. This script then
 runs one short headless Claude Code session per batch on the API key, with Sonnet, no connectors and the
-vault's own permissions. The key is read from the macOS keychain (service "vc-wiki-anthropic"); it never
-touches the repo. Progress is in .wiki/compiled.txt (path + content hash), so an edited note is recompiled
+vault's own permissions. The key is read from the macOS keychain (service "vc-wiki-anthropic"), or else from
+~/.vc-wiki.env (a line ANTHROPIC_API_KEY=...); both live outside the vault, so it never touches the repo. Progress is in .wiki/compiled.txt (path + content hash), so an edited note is recompiled
 and an interrupted run resumes where it stopped. Each batch is committed; spend is logged to .wiki/costs.log.
 """
-import argparse, datetime, glob, hashlib, json, os, subprocess, sys
+import argparse, datetime, glob, hashlib, json, os, re, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DONE = os.path.join(ROOT, ".wiki", "compiled.txt")
@@ -55,10 +55,25 @@ def pending():
     return batches
 
 
-def api_key():
+ENV_FILE = os.path.expanduser("~/.vc-wiki.env")  # outside the vault, so Claude never reads or commits it
+
+
+def keychain():
     r = subprocess.run(["security", "find-generic-password", "-s", "vc-wiki-anthropic", "-w"],
                        capture_output=True, text=True)
-    return r.stdout.strip() if r.returncode == 0 else None
+    return r.stdout.strip() if r.returncode == 0 else ""
+
+
+def api_key():
+    k = keychain()
+    if re.fullmatch(r"sk-ant-[A-Za-z0-9_-]+", k):  # a mangled paste (twice, stray chars) is ignored, not sent
+        return k
+    if os.path.exists(ENV_FILE):
+        for line in open(ENV_FILE):
+            k, _, v = line.strip().partition("=")
+            if k.strip() == "ANTHROPIC_API_KEY" and v.strip():
+                return v.strip().strip('"\'')
+    return None
 
 
 def run_batch(files, key, cap):
@@ -94,8 +109,8 @@ def main():
         return
     key = api_key()
     if not key:
-        sys.exit("No API key in the keychain (service vc-wiki-anthropic). Compile in the Claude session instead, "
-                 "or add the key: security add-generic-password -s vc-wiki-anthropic -a \"$USER\" -w")
+        sys.exit("No API key found (keychain service vc-wiki-anthropic, or ANTHROPIC_API_KEY=... in ~/.vc-wiki.env). "
+                 "Compile in the Claude session instead, or add the key.")
     spent = 0.0
     for src, files in batches:
         left = args.budget - spent

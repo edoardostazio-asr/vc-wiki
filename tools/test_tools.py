@@ -93,6 +93,10 @@ def main():
     write(v, "fake-claude", "#!/bin/sh\necho '{\"total_cost_usd\": 0.42, \"is_error\": false, \"result\": \"ok\"}'\n")
     os.chmod(fake, 0o755)
     comp.CLAUDE = fake
+    comp.ENV_FILE = f"{v}/test.env"
+    write(v, "test.env", "# key\nANTHROPIC_API_KEY='sk-ant-test'\n")
+    comp.keychain = lambda: "xx sk-ant-abc sk-ant-a"  # a garbled keychain entry must be skipped
+    assert comp.api_key() == "sk-ant-test", "env-file fallback"
     ok, cost, _ = comp.run_batch(first[0][1], "sk-test", 5)
     assert ok and cost == 0.42
     for s, f in first:

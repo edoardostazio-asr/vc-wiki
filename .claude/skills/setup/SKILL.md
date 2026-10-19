@@ -45,6 +45,7 @@ You never see or type the key. Tell the user:
 1. Create a key at https://console.anthropic.com → **API Keys** (a few dollars of credit is enough to start; set a monthly limit under **Limits** if they like).
 2. Store it in the macOS keychain (never in the vault). The Claude app's own terminal pane can't paste into hidden prompts, so use one of:
    - The **Terminal** app (Cmd+Space, "Terminal"): run `security add-generic-password -s vc-wiki-anthropic -a "$USER" -w`, paste the key with Cmd+V at each of the two hidden prompts, pressing Enter after each.
+   - Or a private file outside the vault: run `touch ~/.vc-wiki.env && chmod 600 ~/.vc-wiki.env && open -e ~/.vc-wiki.env`, which opens it in TextEdit; the user types `ANTHROPIC_API_KEY=` and pastes the key after it, then saves. Never put the key inside the vault or in their shell profile (that would switch all their Claude Code sessions to API billing).
    - Or **Keychain Access** → File → New Password Item: name `vc-wiki-anthropic`, account = their Mac user name (`whoami`), password = the key.
 3. If `claude --version` fails in Terminal, install the Claude Code command line once: `curl -fsSL https://claude.ai/install.sh | bash`.
 Then check with `python3 tools/compile.py --dry-run` (it must not say "No API key"). If anything fails, set `api_key: false` and continue on Pro; they can add the key later.
